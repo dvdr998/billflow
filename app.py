@@ -1231,8 +1231,6 @@ def is_reminder_eligible(row, today=None):
         return False
     if row_paid_at(row):
         return False
-    if payment_date < today:
-        return False
     if today < scheduled_reminder_datetime(row).date():
         return False
     if row["last_reminder_sent_for_date"] == payment_date.isoformat():
@@ -1253,8 +1251,6 @@ def is_reminder_due(row, now=None):
     if row["status"] != "Active":
         return False
     if row_paid_at(row):
-        return False
-    if payment_date < now.date():
         return False
     if now < scheduled:
         return False

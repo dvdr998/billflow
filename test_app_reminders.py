@@ -3,6 +3,7 @@ import sqlite3
 import tempfile
 import unittest
 from datetime import date, datetime, timedelta
+from unittest.mock import patch
 
 import app
 
@@ -125,6 +126,49 @@ class ReminderFeatureTests(unittest.TestCase):
         self.assertEqual(sent[0][0], "billing@example.net")
         self.assertEqual(second_result["eligible"], 0)
         self.assertEqual(second_result["sent"], 0)
+
+    def test_worker_sends_when_it_runs_after_scheduled_time(self):
+        self.add_sample_bill(reminder_time="08:00")
+        sent = []
+
+        result = app.process_due_reminders(
+            now=datetime(2026, 10, 20, 8, 17),
+            send_email_func=lambda *args: sent.append(args),
+        )
+
+        self.assertEqual(result["sent"], 1)
+        self.assertEqual(len(sent), 1)
+
+    def test_worker_sends_overdue_unsent_reminder_after_payment_date(self):
+        self.add_sample_bill(next_payment_date=date(2026, 10, 20), reminder_time="08:00")
+        result = app.process_due_reminders(
+            now=datetime(2026, 10, 21, 9, 0),
+            send_email_func=lambda *args: None,
+        )
+        self.assertEqual(result["sent"], 1)
+
+    def test_timezone_and_dst_are_iana_aware(self):
+        row = {
+            "next_payment_date": "2026-03-08",
+            "reminder_days": 0,
+            "reminder_time": "09:14",
+            "timezone": "America/Los_Angeles",
+        }
+        scheduled = app.scheduled_reminder_datetime(row)
+        self.assertEqual(scheduled.tzinfo.key, "America/Los_Angeles")
+        self.assertEqual(scheduled.utcoffset().total_seconds(), -7 * 3600)
+        self.assertEqual(
+            scheduled.astimezone(__import__("datetime").timezone.utc).hour,
+            16,
+        )
+
+        india = dict(row, timezone="Asia/Kolkata")
+        self.assertEqual(app.scheduled_reminder_datetime(india).tzinfo.key, "Asia/Kolkata")
+
+    def test_missing_smtp_configuration_reports_names_only(self):
+        with patch.object(app, "get_config_value", return_value=None):
+            with self.assertRaisesRegex(ValueError, "SMTP_HOST"):
+                app.get_smtp_config()
 
     def test_worker_falls_back_to_user_email_for_old_bills(self):
         self.add_sample_bill(reminder_email=None)
