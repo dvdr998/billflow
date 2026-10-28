@@ -28,6 +28,13 @@ class ReminderFeatureTests(unittest.TestCase):
         app.DB = self.original_db
         self.tempdir.cleanup()
 
+    def test_worker_requires_database_url(self):
+        import reminder_worker
+
+        with patch.object(reminder_worker.app, "DATABASE_URL", None):
+            with self.assertRaisesRegex(RuntimeError, "DATABASE_URL is required"):
+                reminder_worker.main()
+
     def rows(self):
         return app.get_bills(self.user_id)
 

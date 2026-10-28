@@ -37,6 +37,15 @@ def initial_config_value(key):
 
 DATABASE_URL = initial_config_value("DATABASE_URL")
 DB = initial_config_value("BILLFLOW_DB") or "bills.db"
+
+# A Streamlit deployment must use the shared persistent database. Falling back
+# to a local SQLite file there creates a private database that GitHub Actions
+# cannot see.
+if st.runtime.exists() and not DATABASE_URL:
+    raise RuntimeError(
+        "DATABASE_URL is required in Streamlit Cloud secrets; "
+        "local SQLite fallback is disabled in production."
+    )
 BILLS_TABLE = "bills_subscriptions"
 PAYMENT_OCCURRENCES_TABLE = "payment_occurrences"
 REMINDER_OCCURRENCES_TABLE = "reminder_occurrences"
