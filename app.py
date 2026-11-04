@@ -986,6 +986,13 @@ def get_row_timezone(row):
         return ZoneInfo(DEFAULT_TIMEZONE)
 
 
+def today_in_timezone(timezone_name=DEFAULT_TIMEZONE):
+    try:
+        return datetime.now(tz=ZoneInfo(timezone_name)).date()
+    except Exception:
+        return datetime.now(tz=ZoneInfo(DEFAULT_TIMEZONE)).date()
+
+
 def scheduled_reminder_datetime(row):
     payment_date = parse_due_date(row)
     reminder_days = int(row["reminder_days"])
@@ -2224,7 +2231,11 @@ def show_add_bill(user_id):
         category = st.selectbox("Category", CATEGORIES, key="add_category")
         frequency = st.selectbox("Billing Frequency", FREQUENCIES, key="add_frequency")
     with c2:
-        next_date = st.date_input("Next Payment Date", min_value=date.today(), key="add_next_date")
+        next_date = st.date_input(
+            "Next Payment Date",
+            min_value=today_in_timezone(DEFAULT_TIMEZONE),
+            key="add_next_date",
+        )
         reminder_choice = st.selectbox(
             "Reminder",
             list(REMINDER_OPTIONS.keys()) + ["Custom"],

@@ -172,6 +172,12 @@ class ReminderFeatureTests(unittest.TestCase):
         india = dict(row, timezone="Asia/Kolkata")
         self.assertEqual(app.scheduled_reminder_datetime(india).tzinfo.key, "Asia/Kolkata")
 
+    def test_today_in_timezone_uses_iana_timezone(self):
+        self.assertEqual(
+            app.today_in_timezone("America/Los_Angeles"),
+            datetime.now().astimezone(__import__("zoneinfo").ZoneInfo("America/Los_Angeles")).date(),
+        )
+
     def test_missing_smtp_configuration_reports_names_only(self):
         with patch.object(app, "get_config_value", return_value=None):
             with self.assertRaisesRegex(ValueError, "SMTP_HOST"):
