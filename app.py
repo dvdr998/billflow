@@ -821,7 +821,8 @@ def payment_status(row, today=None):
     if row_paid_at(row):
         return "Completed"
 
-    today = today or date.today()
+    timezone_name = row["timezone"] if "timezone" in row.keys() else DEFAULT_TIMEZONE
+    today = today or today_in_timezone(timezone_name)
     due = parse_due_date(row)
     if due > today:
         return "Upcoming"
@@ -857,7 +858,7 @@ def greeting():
 
 
 def due_label(due_date):
-    days = (due_date - date.today()).days
+    days = (due_date - today_in_timezone()).days
     if days == 0:
         return "Today"
     if days == 1:
@@ -1240,7 +1241,8 @@ def get_active_reminder_candidates():
 
 
 def is_reminder_eligible(row, today=None):
-    today = today or date.today()
+    timezone_name = row["timezone"] if "timezone" in row.keys() else DEFAULT_TIMEZONE
+    today = today or today_in_timezone(timezone_name)
     payment_date = date.fromisoformat(row["next_payment_date"])
 
     if row["status"] != "Active":
@@ -2045,7 +2047,8 @@ def calculate_expenses(rows):
     yearly_total = sum(
         yearly_equivalent(r["amount"], r["billing_frequency"]) for r in active
     )
-    upcoming_count = sum(1 for r in active if parse_due_date(r) >= date.today())
+    today = today_in_timezone()
+    upcoming_count = sum(1 for r in active if parse_due_date(r) >= today)
 
     return {
         "active_count": len(active),
@@ -2056,7 +2059,7 @@ def calculate_expenses(rows):
 
 
 def upcoming_payments_table(rows):
-    today = date.today()
+    today = today_in_timezone()
     data = []
 
     for r in active_rows(rows):
@@ -2183,7 +2186,7 @@ def show_dashboard(rows, user):
             st.session_state.bill_mode = "Add"
             st.rerun()
 
-    upcoming_rows = [r for r in active_rows(rows) if parse_due_date(r) >= date.today()]
+    upcoming_rows = [r for r in active_rows(rows) if parse_due_date(r) >= today_in_timezone()]
     if upcoming_rows:
         for row in upcoming_rows:
             render_payment_row(row)

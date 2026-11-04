@@ -48,6 +48,7 @@ class ReminderFeatureTests(unittest.TestCase):
         reminder_email="vamshi@example.com",
         frequency="Monthly",
         status="Active",
+        timezone="America/Los_Angeles",
     ):
         app.add_bill(
             self.user_id,
@@ -59,7 +60,7 @@ class ReminderFeatureTests(unittest.TestCase):
             reminder_days,
             status,
             reminder_time,
-            "America/Los_Angeles",
+            timezone,
             reminder_email,
         )
         with app.conn() as c:
@@ -242,6 +243,13 @@ class ReminderFeatureTests(unittest.TestCase):
         self.assertIsNotNone(result)
         self.assertEqual(history[0]["payment_status"], "Completed")
         self.assertEqual(app.payment_status(updated, today=today), "Upcoming")
+
+    def test_payment_status_uses_bill_timezone_when_today_is_implicit(self):
+        row = self.add_sample_bill(
+            next_payment_date=datetime.now().astimezone(__import__("zoneinfo").ZoneInfo("America/Los_Angeles")).date(),
+            timezone="America/Los_Angeles",
+        )
+        self.assertEqual(app.payment_status(row), "Due Today")
 
     def test_monthly_weekly_and_yearly_paid_cycles_advance_calendar_dates(self):
         today = date.today()
