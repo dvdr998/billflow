@@ -19,11 +19,10 @@ GitHub repository under dvdr998
 
 ## Configuration
 
-Production must use a persistent cloud database. Set `DATABASE_URL` in Streamlit Community Cloud secrets and in the independent worker scheduler secrets.
+BillFlow uses local SQLite (`bills.db`) by default. This is suitable for local or single-instance use.
 
-Required secrets:
+Optional SMTP secrets for sending test emails from the app:
 
-- `DATABASE_URL`
 - `SMTP_HOST`
 - `SMTP_PORT`
 - `SMTP_USERNAME`
@@ -32,7 +31,7 @@ Required secrets:
 
 Do not commit `.streamlit/secrets.toml`, `.env`, Gmail App Passwords, or database credentials.
 
-For local development only, BillFlow falls back to `bills.db` if `DATABASE_URL` is not configured.
+Set `BILLFLOW_DB` to use a different local SQLite file.
 
 ## Streamlit Community Cloud Setup
 
@@ -44,7 +43,7 @@ For local development only, BillFlow falls back to `bills.db` if `DATABASE_URL` 
 
 ## Reminder Worker Setup
 
-The web app does not need to stay open for reminders, but the worker must be scheduled separately.
+Automated cloud reminders are disabled in the SQLite-only configuration because a separate worker cannot access the app's local database file.
 
 This repository includes a GitHub Actions workflow:
 
@@ -52,9 +51,9 @@ This repository includes a GitHub Actions workflow:
 .github/workflows/reminder-worker.yml
 ```
 
-It runs `python reminder_worker.py` every 5 minutes and also supports manual `workflow_dispatch`.
+The workflow is retained for manual development use only and is not scheduled.
 
-Configure the same production secrets in the GitHub repository:
+Configure SMTP secrets in the GitHub repository only if you use the worker against a database explicitly configured for that environment:
 
 `Settings -> Secrets and variables -> Actions -> Repository secrets`
 

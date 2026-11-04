@@ -2,11 +2,6 @@ import app
 
 
 def main():
-    if not app.DATABASE_URL:
-        raise RuntimeError(
-            "DATABASE_URL is required for the reminder worker; "
-            "refusing to use local SQLite in GitHub Actions."
-        )
     app.initialize_database()
     result = app.process_due_reminders()
 
