@@ -171,7 +171,7 @@ class ReminderFeatureTests(unittest.TestCase):
         )
 
         india = dict(row, timezone="Asia/Kolkata")
-        self.assertEqual(app.scheduled_reminder_datetime(india).tzinfo.key, "Asia/Kolkata")
+        self.assertEqual(app.scheduled_reminder_datetime(india).tzinfo.key, "America/Los_Angeles")
 
     def test_today_in_timezone_uses_iana_timezone(self):
         self.assertEqual(

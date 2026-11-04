@@ -675,7 +675,7 @@ def claim_reminder_occurrence(row, scheduled):
                     row["user_id"],
                     payment_date.isoformat(),
                     scheduled_text,
-                    row["timezone"],
+                    DEFAULT_TIMEZONE,
                     row["effective_reminder_email"],
                     "Processing",
                     now_text,
@@ -698,7 +698,7 @@ def claim_reminder_occurrence(row, scheduled):
                     row["user_id"],
                     payment_date.isoformat(),
                     scheduled_text,
-                    row["timezone"],
+                    DEFAULT_TIMEZONE,
                     row["effective_reminder_email"],
                     "Processing",
                     now_text,
@@ -720,7 +720,7 @@ def claim_reminder_occurrence(row, scheduled):
               AND status IN ('Scheduled', 'Due', 'Failed')""",
             (
                 scheduled_text,
-                row["timezone"],
+                DEFAULT_TIMEZONE,
                 row["effective_reminder_email"],
                 now_text,
                 row["id"],
@@ -821,7 +821,7 @@ def payment_status(row, today=None):
     if row_paid_at(row):
         return "Completed"
 
-    timezone_name = row["timezone"] if "timezone" in row.keys() else DEFAULT_TIMEZONE
+    timezone_name = DEFAULT_TIMEZONE
     today = today or today_in_timezone(timezone_name)
     due = parse_due_date(row)
     if due > today:
@@ -980,11 +980,7 @@ def reminder_label(days):
 
 
 def get_row_timezone(row):
-    timezone_name = row["timezone"] if "timezone" in row.keys() else DEFAULT_TIMEZONE
-    try:
-        return ZoneInfo(timezone_name)
-    except Exception:
-        return ZoneInfo(DEFAULT_TIMEZONE)
+    return ZoneInfo(DEFAULT_TIMEZONE)
 
 
 def today_in_timezone(timezone_name=DEFAULT_TIMEZONE):
@@ -1241,7 +1237,7 @@ def get_active_reminder_candidates():
 
 
 def is_reminder_eligible(row, today=None):
-    timezone_name = row["timezone"] if "timezone" in row.keys() else DEFAULT_TIMEZONE
+    timezone_name = DEFAULT_TIMEZONE
     today = today or today_in_timezone(timezone_name)
     payment_date = date.fromisoformat(row["next_payment_date"])
 
@@ -1391,7 +1387,7 @@ def insert_payment_occurrence(c, row, user_email, paid_at):
             payment_date.isoformat(),
             row["reminder_days"],
             row["reminder_time"] if "reminder_time" in row.keys() else DEFAULT_REMINDER_TIME,
-            row["timezone"] if "timezone" in row.keys() else DEFAULT_TIMEZONE,
+            DEFAULT_TIMEZONE,
             resolved_reminder_email(row, user_email),
             "Completed",
             paid_at.isoformat(timespec="seconds"),
@@ -2260,13 +2256,7 @@ def show_add_bill(user_id):
             value=parse_reminder_time(DEFAULT_REMINDER_TIME),
             key_prefix="add_reminder_time",
         )
-        selected_timezone = st.selectbox(
-            "Timezone",
-            timezone_options(),
-            index=timezone_index(DEFAULT_TIMEZONE),
-            format_func=timezone_display_name,
-            key="add_timezone",
-        )
+        selected_timezone = DEFAULT_TIMEZONE
         reminder_email = st.text_input(
             "Reminder Email",
             value=default_reminder_email,
@@ -2321,7 +2311,7 @@ def toggle_bill_status(user_id, row):
         row["reminder_days"],
         new_status,
         row["reminder_time"] if "reminder_time" in row.keys() else DEFAULT_REMINDER_TIME,
-        row["timezone"] if "timezone" in row.keys() else DEFAULT_TIMEZONE,
+        DEFAULT_TIMEZONE,
         row["reminder_email"] if "reminder_email" in row.keys() else None,
     )
 
@@ -2401,13 +2391,7 @@ def show_edit_form(user_id, row):
                 key=f"edit_custom_days_{row['id']}",
             )
 
-        selected_timezone = st.selectbox(
-            "Timezone",
-            timezone_options(),
-            index=timezone_index(row["timezone"] if "timezone" in row.keys() else DEFAULT_TIMEZONE),
-            format_func=timezone_display_name,
-            key=f"edit_timezone_{row['id']}",
-        )
+        selected_timezone = DEFAULT_TIMEZONE
         reminder_email = st.text_input(
             "Reminder Email",
             value=current_reminder_email,
@@ -2590,7 +2574,7 @@ def render_reminder_row(row, user_email):
             </div>
             <div>
                 <div class="row-label">Timezone</div>
-                <div class="row-value">{h(timezone_display_name(row['timezone'] if 'timezone' in row.keys() else DEFAULT_TIMEZONE))}</div>
+                <div class="row-value">{h(timezone_display_name(DEFAULT_TIMEZONE))}</div>
             </div>
             <div>
                 <div class="row-label">Scheduled For</div>
